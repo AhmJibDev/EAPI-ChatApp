@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chatter</title>
+    <style>
+         /* Global styles */
+
+        html {
+            padding: 0;
+            margin: 0;
+            color: #303030;
+            font-family: Roboto;
+            font-style: normal;
+            font-weight: 400;
+            line-height: normal;
+            letter-spacing: 1.25px;
+        }
+        body {
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+            height: 80vh;
+            margin: 0 0 0 80px;
+            padding: 90px 50px 0px 50px;
+            background-color: #F8F9FB;
+            display: flex;
+        }
+
+        h2 {
+            margin: 0;
+        }
+        aside {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 80px;
+            height: 100vh;
+            background-color: #303030;
+            padding: 30px 0;
+        }
+
+        aside img{
+            width: 35px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+
+        aside nav {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 93vh;
+        }
+
+        #menu, #setting{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around;
+        }
+
+        #menu {
+            height: 40vh;
+        }
+
+        #row1 {
+            display: flex;
+            flex-direction: column;
+            justify-content:space-between;
+            width: 35%;
+            margin: 0 20px;
+        }
+
+        #row2 {
+            width: 65%;
+            margin: 0 20px;
+            padding: 30px;
+            border-radius: 25px;
+            box-shadow: 3px 6px 11px 0px rgba(0, 0, 0, 0.25);
+        }
+
+        #welcome-info {
+            position: relative;
+            border-radius: 25px;
+            border: 3px solid #00A1E1;
+            background: rgba(255, 255, 255, 0.20);
+            box-shadow: 3px 6px 11px 0px rgba(0, 0, 0, 0.25);
+            padding: 20px;
+            height: 25%;
+        }
+
+        #astroMax{
+            width: 150px;
+            position: absolute;
+            bottom: -10px;
+            right: -10px;
+        }
+        #search, #contact{
+            border-radius: 25px;
+            background: #FFF;
+            box-shadow: 3px 6px 11px 0px rgba(0, 0, 0, 0.25);
+        }
+
+        #search{
+            height: 60px;
+            color: #7C7C7C;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        #search input {
+            color: #7C7C7C;
+            border: none;
+            font-size: 24px;
+            font-weight: 200;
+        }
+        #contact {
+            height: 47%;
+            padding: 20px;
+            
+        }
+
+        #contact img{
+            width: 30px;
+            margin-right: 15px;
+        }
+
+        #contact ul {
+            padding: 0;
+            margin: 0;
+        }
+
+        #contact li {
+            position: relative;
+            list-style: none;
+            height: 70px;
+            font-weight: 500;
+            border-bottom: 1px solid #b4abab77 ;
+            display: flex;
+            align-items: center;
+        }
+
+        .date{
+            position: absolute;
+            right: 10px;
+            color: #7C7C7C;
+            font-size: 14px;
+            font-style: normal;
+            font-weight: 300;
+            line-height: normal;
+            letter-spacing: 0.16px;
+        }
+
+        #person {
+            display: flex;
+            justify-content:space-between;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #b4abab77 ;
+        }
+
+        #person-details {
+            display: flex;
+            align-items: center;
+        }
+
+        #person img{
+            width: 40px;
+            margin-right: 20px;
+        }
+
+        #chat-icon {
+            display: flex;
+            align-items: center;
+        }
+        
+        #chat-icon img{
+            width: 30px;
+
+        }
+
+        #chatter{
+            display: flex;
+            flex-direction: column;
+            height: 72%;
+            padding: 30px 20px;
+            overflow-y: auto;
+        }
+
+        .sender,
+        .recipient {
+        max-width: 80%; /* Limite la largeur à 80% de l'élément parent */
+        padding: 10px;
+        margin: 10px 0;
+        overflow-wrap: break-word; /* Permet au texte de se casser et passer à la ligne suivante */
+        }
+
+        .sender {
+        background-color: #3274CC; /* Couleur de fond pour l'expéditeur */
+        color: white;
+        text-align: right;
+        margin-left: auto; /* Aligne la bulle à droite */
+        border-radius: 10px 10px 0 10px; /* Bordures arrondies */
+        }
+
+        .recipient {
+        background-color: #E7E7E7; /* Couleur de fond pour le destinataire */
+        text-align: left;
+        margin-right: auto; /* Aligne la bulle à gauche */
+        border-radius: 10px 10px 10px 0; /* Bordures arrondies */
+        }
+
+        #form-message {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        #message-box {
+            border: 1px solid #00a1e124;
+            width: 83%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px 0px 20px;
+            border-radius: 15px;
+            height: 60px;
+            background: #EFF6FC;  
+            
+        }
+        #message-box,#message-box div{
+            display: flex;
+            align-items: center;
+        }
+
+        #form-message img{
+            width: 25px; 
+            margin-right: 15px;
+        }
+
+        #userText {
+            max-width: 500px;
+            width: 450px;
+            border: none;
+            overflow-wrap: break-word; 
+            background-color: inherit;
+            color: #303030;
+            font-size: 16px;
+            font-style: normal;
+            font-weight: 300;
+            line-height: normal;
+            letter-spacing: 1.2px;
+        }
+
+        button {
+            border-radius: 15px;
+            background-color: #3274CC;
+            height: 60px;
+            width: 60px;
+            border: none;
+        }
+
+        input:focus {
+            outline: none; 
+            border-bottom: 1px solid #7C7C7C !important; 
+        }
+        
+        
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar contenant le menu de navigation et les paramètres -->
+    <aside id="sidebar">
+        <nav>
+            <div id="menu">
+                <img src="./html/images/mulesoft_logo_icon.png" alt="Logo de MuleSoft" style="width: 45px;">
+                <img src="./html/images/codicon_home.png" alt="Icône de la page d'accueil">
+                <img src="./html/images/chat.png" alt="Icône de chat" style="border-left: solid white 4px; padding-left: 22px; padding-right: 22px;">
+                <img src="./html/images/notification.png" alt="Icône de notification">
+            </div>
+            <div id="setting">
+                <img src="./html/images/ci_settings.png" alt="Icône des paramètres">
+            </div>
+        </nav>
+    </aside>
+
+    <!-- En-tête contenant les informations de bienvenue, la recherche et les contacts -->
+    <header id="row1">
+        <div id="welcome-info">
+            <h2>Hello Jacques !</h2>
+            <p>Welcome to the best <br>messaging for businesses.</p>
+            <img src="./html/images/eutelsat 3.png" alt="Logo de l'entreprise" style="width: 180px;">
+            <img src="./html/images/astroMax.png" alt="Astro et Max" id="astroMax">
+        </div>
+
+        <div id="search">
+            <img src="./html/images/bx_search.png" alt="Icone Search" style="width: 30px;margin-right: 10px;">
+            <input placeholder="Search" ="text" id="search-box">
+        </div>
+
+        <div id="contact">
+            <h2>Contact</h2>
+            <ul id="list-contact">
+                <!-- Liste des contacts -->
+                <li><img src="./html/images/mulesoft_logo_icon.png" alt="Logo de MuleSoft">Pauline <span class="date">Today, 9.52pm</span></li>
+                <li><img src="./html/images/mulesoft_logo_icon.png" alt="Logo de MuleSoft">Victor <span class="date">Today, 9.52pm</span></li>
+                <li><img src="./html/images/mulesoft_logo_icon.png" alt="Logo de MuleSoft">Lila <span class="date">Today, 9.52pm</span></li>
+                <li><img src="./html/images/mulesoft_logo_icon.png" alt="Logo de MuleSoft">Nicolas <span class="date">Today, 9.52pm</span></li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Contenu principal contenant les détails de la personne, le chat et le formulaire de message -->
+    <main id="row2">
+        <section id="person">
+            <!-- Détails de la personne avec laquelle l'utilisateur chatte -->
+            <div id="person-details">
+                <img src="./html/images/mulesoft_logo_icon.png" alt="Logo de MuleSoft"> 
+                <h2>Pauline</h2>
+            </div>
+
+            <!-- Icônes pour la téléphonie et le menu supplémentaire -->
+            <div id="chat-icon">
+                <img src="./html/images/ci_phone-outline.png" alt="Icône de téléphone">
+                <img src="./html/images/bi_three-dots-vertical.png" alt="Icône de menu">
+            </div>
+        </section>
+
+        <!-- Chat entre l'utilisateur et la personne sélectionnée -->
+        <section id="chatter">
+            <p class="recipient">Hey There!</p>
+            <p class="sender">Hello</p>
+            <p class="sender">I am fine and how are you?</p>
+            <p class="recipient">I am doing well, Can we meet tomorrow?</p>
+        </section>
+
+        <!-- Formulaire pour envoyer un message -->
+        <form id="form-message">
+            <div id="message-box">
+                <div>
+                    <img src="./html/images/bi_mic-fill.png" alt="Icône de microphone">
+                    <input type="text" id="userText" name="userText" placeholder="Type your message here..." required>
+                </div>
+                <!-- Icônes pour les émoticônes, les pièces jointes et les images -->
+                <div id="chat-icon">
+                    <img src="./html/images/fluent_emoji-laugh-16-regular.png" alt="Icône d'émoticônes">
+                    <img src="./html/images/ant-design_paper-clip-outlined.png" alt="Icône de pièce jointe">
+                </div>
+            </div>
+
+            <!-- Bouton pour envoyer le message -->
+            <button type="submit"><img src="./html/images/bxs_send.png" style="margin: 0;"="Icône de flèche d'envoi"></button>
+        </form>
+    </main>
+</body>
+
+</html>

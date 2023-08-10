@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ...">
+	
+	<!-- Configuration Section -->
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config">
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+
+	<db:config name="Database_Config" doc:name="Database Config">
+		<db:my-sql-connection host="${sql.Host}" port="${sql.Port}" user="${sql.User}" password="${sql.Password}" database="${sql.Database}" />
+	</db:config>
+
+	<configuration-properties file="config.yaml" />
+
+	<!-- Login Page Flow -->
+	<flow name="GetLoginPageFlow">
+		<http:listener config-ref="HTTP_Listener_config" path="/login" allowedMethods="GET" />
+		<set-payload value="#[{}]" />
+		<parse-template location="html/login.html" />
+		<error-handler>
+			<on-error-continue type="ANY" logException="true">
+				<set-payload value="#[&quot;error&quot;: &quot;Une erreur s'est produite lors du chargement de la page de connexion&quot;]" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+
+	<!-- Authentication Flow -->
+	<flow name="DoLoginFlow">
+		<http:listener config-ref="HTTP_Listener_config" path="/login" allowedMethods="POST">
+			<http:response statusCode="200" />
+		</http:listener>
+		<logger level="INFO" message='#["User is trying to login"]' />
+		<choice>
+			<when expression="#[payload.username == 'mule' and payload.password == 'mule']">
+				<parse-template location="html/index.html" />
+			</when>
+			<otherwise>
+				<ee:transform>
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"errorMessage": "Mot de passe incorrect"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<parse-template location="html/login.html" />
+			</otherwise>
+		</choice>
+		<error-handler>
+			<on-error-continue type="ANY" logException="true">
+				<set-payload value="#[&quot;error&quot;: &quot;Une erreur s'est produite lors de la tentative de connexion&quot;]" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+
+	<!-- Static Resources Flow -->
+	<flow name="GetStaticResource">
+		<http:listener config-ref="HTTP_Listener_config" path="/html/images/*" />
+		<logger level="INFO" />
+		<http:load-static-resource resourceBasePath="${mule.home}/apps/${app.name}/html/images" defaultFile="logo.png" />
+		<error-handler>
+			<on-error-continue type="ANY" logException="true">
+				<set-payload value="#[&quot;error&quot;: &quot;Une erreur s'est produite lors du chargement de la ressource&quot;]" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <style>
+        /* Global styles */
+        body {
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+            height: 100vh;
+            margin: 0;
+            background: #4079f1;
+        }
+
+        /* Main section styles */
+        main {
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Header styles */
+        h2 {
+            text-align: center;
+            margin-top: 0;
+        }
+
+        /* Login container styles */
+        .login-container {
+            position: relative;
+            background: #fff;
+            color: #5c5c5c;
+            border-radius: 2px;
+            box-shadow: 0 5px 30px 0 rgba(0, 0, 0, .15);
+            padding: 40px;
+            width: 400px;
+        }
+
+        /* Logo styles */
+        #Logo {
+            margin: 0 auto;
+            width: 150px;
+        }
+
+        img {
+            width: 150px;
+            margin: 4em 0;
+        }
+
+        /* Form styles */
+        input {
+            font-style: normal;
+            font-weight: 400;
+            border-radius: 4px;
+            border: 1px solid #5c5c5c;
+            box-sizing: border-box;
+            color: #5c5c5c;
+            font-size: 14px;
+            line-height: 20px;
+            margin: 10px 0;
+            padding: 9px 12px;
+            transition: box-shadow .15s cubic-bezier(.46,.03,.52,.96);
+            width: 100%;
+            box-shadow: none;
+        }
+
+        /* Button styles */
+        button {
+            border: none;
+            cursor: pointer;
+            padding: 0.5em 1em;
+            font-size: 14px;
+            line-height: 20px;
+            width: 100%;
+            min-height: 40px;
+            padding: 0 15px;
+            margin: 10px 0;
+            background-color: #0176d3;
+            border-color: #0176d3;
+            border-radius: 4px;
+            color: white;
+            font-weight: 400;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Marketing text styles */
+        #text {
+            position: absolute;
+            top: 30px;
+            right: -350px;
+            width: 300px;
+            font-size: 27px;
+            font-weight: 700;
+            line-height: 1.2;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Logo Section -->
+    <div id="Logo">
+        <img src="./html/images/logo.png" alt="Logo"> 
+    </div>
+    <!-- Login Form -->
+    <main>
+        <div class="login-container">
+            <h2>Sign in</h2>
+            <form action="/login" method="POST">
+                <input type="text" id="login" name="username" placeholder="Username" required>
+                <input type="password" id="password" name="password" placeholder="Password" required>
+                <button type="submit" name="Submit" id="submit">Sign in</button>
+                <span id="error-message"></span>
+            </form>
+            <!-- Marketing text -->
+            <span id="text">Unifiez la communication. Dynamisez vos analyses. <br><span style="font-weight: 400;font-size: 22px;">Obtenez des résultats en temps réel grâce à WebSockets.</span></span>
+        </div>
+    </main>
+    <script>
+	    var errorMessage = "#[payload.errorMessage]";
+		if (errorMessage && errorMessage != "null") {
+		    document.getElementById('error-message').innerText = errorMessage;
+		}
+	</script>
+</body>
+</html>

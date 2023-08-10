@@ -1,0 +1,6 @@
+sql:
+  Host: "cloud-services.demos.mulesoft.com"
+  Port: "32569"
+  User: "mule"
+  Password: "Databa$e1_.*pAssW,"
+  Database: "demodb"
