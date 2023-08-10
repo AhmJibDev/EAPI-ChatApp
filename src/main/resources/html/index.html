@@ -354,6 +354,15 @@
             <button type="submit"><img src="./html/images/bxs_send.png" style="margin: 0;"="Icône de flèche d'envoi"></button>
         </form>
     </main>
+    <script>
+    	document.addEventListener('DOMContentLoaded', function() {
+		    var welcomeInfo = document.getElementById('welcome-info');
+		    var h2 = welcomeInfo.getElementsByTagName('h2')[0];
+		    var text = h2.textContent || h2.innerText; // Récupère le texte du h2
+		    text = text.replace('[', '').replace(']', ''); // Supprime les crochets
+		    h2.textContent = text; // Met à jour le texte du h2
+		});
+    </script>
 </body>
 
 </html>
