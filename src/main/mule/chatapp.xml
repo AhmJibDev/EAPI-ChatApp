@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:file="http://www.mulesoft.org/schema/mule/file"
+<mule xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
 	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
 	xmlns:http="http://www.mulesoft.org/schema/mule/http"
 	xmlns:db="http://www.mulesoft.org/schema/mule/db"
 	xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ...">
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ...
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd">
 	
 	<!-- Configuration Section -->
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config">
@@ -40,8 +41,30 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			<http:response statusCode="200" />
 		</http:listener>
 		<logger level="INFO" message='#["User is trying to login"]' />
+		
+		<!-- Query the database to check if the user exists with the given password -->
+		<ee:transform doc:name="Transform Message" doc:id="274372a1-7474-4ca6-bd02-e7e656f0896b">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+import dw::Crypto
+output application/json
+---
+{ 
+	"username" : payload.username ,
+	"sha1" : Crypto::SHA1(payload.password as Binary) 
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:select config-ref="Database_Config" doc:name="Check User">
+			<db:sql><![CDATA[SELECT * FROM users WHERE username = :username AND password = :password
+			]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	"username": payload.username,
+	"password": payload.sha1
+}]]]></db:input-parameters>
+		</db:select>
 		<choice>
-			<when expression="#[payload.username == 'mule' and payload.password == 'mule']">
+			<when expression="#[sizeOf(payload) &gt; 0]">
 				<parse-template location="html/index.html" />
 			</when>
 			<otherwise>
@@ -51,7 +74,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 output application/java
 ---
 {
-	"errorMessage": "Mot de passe incorrect"
+	"errorMessage": "Nom d'utilisateur ou mot de passe incorrect"
 }]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
