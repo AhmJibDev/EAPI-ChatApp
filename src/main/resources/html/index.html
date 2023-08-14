@@ -271,6 +271,48 @@
 </head>
 
 <body>
+	<script>
+		// Remplacer "ws://example.com" par l'URL de votre serveur WebSocket
+		var connection = new WebSocket('ws://localhost:8081/chat');
+		
+		connection.onopen = function() {
+		    console.log('Connection ouverte');
+		};
+		
+		connection.onerror = function(error) {
+		    console.error('Erreur de connexion WebSocket: ', error);
+		};
+		
+		connection.onmessage = function(e) {
+		    console.log('Message du serveur: ', e.data);
+		
+		    // Ajouter le message à la section chatter
+		    var chatter = document.getElementById('chatter');
+		    var p = document.createElement('p');
+		    p.className = 'recipient';
+		    p.textContent = e.data;
+		    chatter.appendChild(p);
+		};
+		
+		document.getElementById('form-message').addEventListener('submit', function(e) {
+		    e.preventDefault();
+		    var message = document.getElementById('userText').value;
+		
+		    // Envoyer le message au serveur
+		    connection.send(message);
+		
+		    // Ajouter le message à la section chatter comme message envoyé
+		    var chatter = document.getElementById('chatter');
+		    var p = document.createElement('p');
+		    p.className = 'sender';
+		    p.textContent = message;
+		    chatter.appendChild(p);
+		
+		    // Effacer le champ de saisie
+		    document.getElementById('userText').value = '';
+		});
+		
+	</script>
     <!-- Sidebar contenant le menu de navigation et les paramètres -->
     <aside id="sidebar">
         <nav>
