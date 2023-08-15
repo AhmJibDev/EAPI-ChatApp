@@ -1,23 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:websocket="http://www.mulesoft.org/schema/mule/websocket"
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:websocket="http://www.mulesoft.org/schema/mule/websocket"
 	xmlns:java="http://www.mulesoft.org/schema/mule/java"
 	xmlns:file="http://www.mulesoft.org/schema/mule/file"
 	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
 	xmlns:http="http://www.mulesoft.org/schema/mule/http"
 	xmlns:db="http://www.mulesoft.org/schema/mule/db"
-	xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ...
 http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
-http://www.mulesoft.org/schema/mule/websocket http://www.mulesoft.org/schema/mule/websocket/current/mule-websocket.xsd">
+http://www.mulesoft.org/schema/mule/websocket http://www.mulesoft.org/schema/mule/websocket/current/mule-websocket.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	
 	<!-- Configuration Section -->
+	<!-- Listener and DB configurations -->
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config">
 		<http:listener-connection host="0.0.0.0" port="8081" />
 	</http:listener-config>
-
+	
 	<db:config name="Database_Config" doc:name="Database Config">
 		<db:my-sql-connection host="${sql.Host}" port="${sql.Port}" user="${sql.User}" password="${sql.Password}" database="${sql.Database}" />
 	</db:config>
@@ -25,12 +27,11 @@ http://www.mulesoft.org/schema/mule/websocket http://www.mulesoft.org/schema/mul
 	<configuration-properties file="config.yaml" />
 
 	<!-- Login Page Flow -->
-	
+	<!-- Serves the login page -->
 	<flow name="GetLoginPageFlow">
 		<http:listener config-ref="HTTP_Listener_config" path="/login" allowedMethods="GET" />
-	  	<set-payload value="#[{}]" />
-	    <parse-template location="html/login.html" />
-	        
+	  	<set-payload value="#[{}]" doc:name="ClearPayload"/>
+	    <parse-template location="html/login.html" doc:name="Login Page"/>
 	    <error-handler>
 	        <on-error-continue type="ANY" logException="true">
 	            <set-payload value="#[&quot;error&quot;: &quot;Une erreur s'est produite lors du chargement de la page de connexion&quot;]" />
@@ -39,20 +40,25 @@ http://www.mulesoft.org/schema/mule/websocket http://www.mulesoft.org/schema/mul
 	</flow>
 
 	<!-- Authentication Flow -->
+	<!-- Handles user login and redirects to chat if successful -->
 	<flow name="DoLoginFlow">
 		<http:listener config-ref="HTTP_Listener_config" path="/login" allowedMethods="POST">
-		    <http:response statusCode="#[vars.httpStatus default 200]">
+			<!-- Response configuration for redirection -->
+		    <http:response statusCode="#[vars.httpStatus default 200]"> 
 		        <http:headers><![CDATA[
 		            #[{
-		                "Location": vars.RedirectURL
+		                "Location": vars.RedirectURL,
+		                "Set-Cookie": vars.usernameCookie,
+            			"Set-Cookie": vars.userIdCookie
 		            }]
 		        ]]></http:headers>
 		    </http:response>
 		</http:listener>
-		<logger level="INFO" message='#["User is trying to login"]' />
+		
+		<logger level="INFO" message='#["User is trying to login"]' doc:name="User is trying to login"/>
 		
 		<!-- Query the database to check if the user exists with the given password -->
-		<ee:transform doc:name="Transform Message" doc:id="274372a1-7474-4ca6-bd02-e7e656f0896b">
+		<ee:transform doc:name="ApplySHA1ToPassword" doc:id="8e1ccd11-a0ee-4ff0-b23c-fca8ccd0ef56">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 import dw::Crypto
@@ -61,37 +67,43 @@ output application/json
 { 
 	"username" : payload.username ,
 	"sha1" : Crypto::SHA1(payload.password as Binary) 
-}]]></ee:set-payload>
+}]]>
+				</ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		<db:select config-ref="Database_Config" doc:name="Check User">
-			<db:sql><![CDATA[SELECT * FROM users WHERE username = :username AND password = :password
-			]]></db:sql>
+			<db:sql>
+				<![CDATA[SELECT * FROM users WHERE username = :username AND password = :password]]>
+			</db:sql>
 			<db:input-parameters><![CDATA[#[{
 	"username": payload.username,
 	"password": payload.sha1
-}]]]></db:input-parameters>
+}]]]>
+			</db:input-parameters>
 		</db:select>
 		<choice>
 			<when expression="#[sizeOf(payload) &gt; 0]">
 			    <!-- Success: Redirect to chat page -->
+			    <!-- Set Cookies -->
+            	<set-variable value="#['username=' ++ payload[0].username]" variableName="usernameCookie" doc:name="Set Username Cookie"/>
+				<set-variable value="#['userId=' ++ payload[0].id]" variableName="userIdCookie" doc:name="Set UserId Cookie"/>
 			    <set-variable value="302" doc:name="Set HTTP Status" variableName="httpStatus"/>
 			    <set-variable value="http://localhost:8081/chat" doc:name="Set Redirect URL" variableName="RedirectURL"/>
-				<parse-template doc:name="Parse Template" doc:id="01b20419-fe04-45d6-ac17-e02355cd83a5" location="html/index.html" />
+				<parse-template doc:name="Home Page" location="html/index.html" />
 			</when>
 
 			<otherwise>
-				<ee:transform>
+				<ee:transform doc:name="CreateLoginErrorMessage">
 					<ee:message>
 						<ee:set-payload><![CDATA[%dw 2.0
 output application/java
 ---
 {
 	"errorMessage": "Nom d'utilisateur ou mot de passe incorrect"
-}]]></ee:set-payload>
+}]]>					</ee:set-payload>
 					</ee:message>
 				</ee:transform>
-				<parse-template location="html/login.html" />
+				<parse-template location="html/login.html" doc:name="Login Page"/>
 			</otherwise>
 		</choice>
 		<error-handler>
@@ -102,13 +114,14 @@ output application/java
 	</flow>
 	
 	<!-- Get Chat Page Flow -->
-	<flow name="GetChatPageFlow" doc:id="29029288-67ad-4c8b-bcac-c9b103fd40e3" >
-		<http:listener doc:name="Listener" doc:id="bfc38cca-b5c4-4e0b-a0a8-ff588b686175" config-ref="HTTP_Listener_config" path="/chat"/>
-		<set-payload value="#[{}]" doc:name="Set Payload" doc:id="2ceec897-5fc2-4d8f-9d15-63bde5ac960e" />
-		<parse-template doc:name="Parse Template" doc:id="e42215a1-70e2-40f9-89cb-3514c9212819" location="html/index.html"/>
+	<!-- Serves the chat page -->
+	<flow name="GetChatPageFlow" doc:id="c97ea949-a66b-494e-a36d-7d1aecc2f5c0" >
+		<http:listener doc:name="Listener" doc:id="be203d6d-711c-44c5-a300-16c28c110bfc" config-ref="HTTP_Listener_config" path="/chat"/>
+		<parse-template doc:name="Home Page" doc:id="15fa125d-d2c3-46ba-a22c-699a0e4326f4" location="html/index.html"/>
 	</flow>
 	
 	<!-- Static Resources Flow -->
+	<!-- Handles static resources like images -->
 	<flow name="GetStaticResource">
 		<http:listener config-ref="HTTP_Listener_config" path="/html/images/*" />
 		<logger level="INFO" />
@@ -119,8 +132,4 @@ output application/java
 			</on-error-continue>
 		</error-handler>
 	</flow>
-	
-	
-	
-	
 </mule>

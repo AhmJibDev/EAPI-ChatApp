@@ -272,46 +272,36 @@
 
 <body>
 	<script>
-		// Remplacer "ws://example.com" par l'URL de votre serveur WebSocket
-		var connection = new WebSocket('ws://localhost:8081/chat');
+	
+		document.addEventListener("DOMContentLoaded", function() {
+		    function getCookies() {
+		        const cookies = document.cookie.split("; ");
+		        const result = {};
+		        cookies.forEach(cookie => {
+		            const [name, value] = cookie.split("=");
+		            result[name] = value;
+		        });
+		        return result;
+		    }
 		
-		connection.onopen = function() {
-		    console.log('Connection ouverte');
-		};
+		    const cookies = getCookies();
+		    const username = cookies.username;
+		    const userId = cookies.userId;
 		
-		connection.onerror = function(error) {
-		    console.error('Erreur de connexion WebSocket: ', error);
-		};
+		    if (username) {
+		        console.log(`Le nom d'utilisateur est ${username}`);
+		        document.getElementById("name").textContent = "Hello " + username + "!";
+		    } else {
+		        console.log('Cookie username non trouvé');
+		    }
 		
-		connection.onmessage = function(e) {
-		    console.log('Message du serveur: ', e.data);
-		
-		    // Ajouter le message à la section chatter
-		    var chatter = document.getElementById('chatter');
-		    var p = document.createElement('p');
-		    p.className = 'recipient';
-		    p.textContent = e.data;
-		    chatter.appendChild(p);
-		};
-		
-		document.getElementById('form-message').addEventListener('submit', function(e) {
-		    e.preventDefault();
-		    var message = document.getElementById('userText').value;
-		
-		    // Envoyer le message au serveur
-		    connection.send(message);
-		
-		    // Ajouter le message à la section chatter comme message envoyé
-		    var chatter = document.getElementById('chatter');
-		    var p = document.createElement('p');
-		    p.className = 'sender';
-		    p.textContent = message;
-		    chatter.appendChild(p);
-		
-		    // Effacer le champ de saisie
-		    document.getElementById('userText').value = '';
+		    if (userId) {
+		        console.log(`L'ID utilisateur est ${userId}`);
+		    } else {
+		        console.log('Cookie userId non trouvé');
+		    }
 		});
-		
+				
 	</script>
     <!-- Sidebar contenant le menu de navigation et les paramètres -->
     <aside id="sidebar">
@@ -331,7 +321,7 @@
     <!-- En-tête contenant les informations de bienvenue, la recherche et les contacts -->
     <header id="row1">
         <div id="welcome-info">
-            <h2>Hello #[payload.username] !</h2>
+            <h2 id="name">Hello !</h2>
             <p>Welcome to the best <br>messaging for businesses.</p>
             <img src="./html/images/eutelsat 3.png" alt="Logo de l'entreprise" style="width: 180px;">
             <img src="./html/images/astroMax.png" alt="Astro et Max" id="astroMax">
