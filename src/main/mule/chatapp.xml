@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
-	xmlns:websocket="http://www.mulesoft.org/schema/mule/websocket"
-	xmlns:java="http://www.mulesoft.org/schema/mule/java"
-	xmlns:file="http://www.mulesoft.org/schema/mule/file"
-	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:http="http://www.mulesoft.org/schema/mule/http"
-	xmlns:db="http://www.mulesoft.org/schema/mule/db"
-	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+      xmlns:websocket="http://www.mulesoft.org/schema/mule/websocket"
+      xmlns:java="http://www.mulesoft.org/schema/mule/java"
+      xmlns:file="http://www.mulesoft.org/schema/mule/file"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:db="http://www.mulesoft.org/schema/mule/db"
+      xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ...
@@ -15,7 +15,7 @@ http://www.mulesoft.org/schema/mule/websocket http://www.mulesoft.org/schema/mul
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	
 	<!-- Configuration Section -->
-	<!-- Listener and DB configurations -->
+	<!-- This section includes the listener and database configurations -->
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config">
 		<http:listener-connection host="0.0.0.0" port="8081" />
 	</http:listener-config>
@@ -27,23 +27,23 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 	<configuration-properties file="config.yaml" />
 
 	<!-- Login Page Flow -->
-	<!-- Serves the login page -->
+	<!-- This flow is responsible for serving the login page -->
 	<flow name="GetLoginPageFlow">
 		<http:listener config-ref="HTTP_Listener_config" path="/login" allowedMethods="GET" />
-	  	<set-payload value="#[{}]" doc:name="ClearPayload"/>
+	  	<set-payload value="#[{}]" doc:name="ClearPayload"/> <!-- Clear any existing payload -->
 	    <parse-template location="html/login.html" doc:name="Login Page"/>
 	    <error-handler>
 	        <on-error-continue type="ANY" logException="true">
-	            <set-payload value="#[&quot;error&quot;: &quot;Une erreur s'est produite lors du chargement de la page de connexion&quot;]" />
+	            <set-payload value="#[&quot;error&quot;: &quot;Une erreur s'est produite lors du chargement de la page de connexion&quot;]" /> <!-- Handle page loading error -->
 	        </on-error-continue>
 	    </error-handler>
 	</flow>
 
 	<!-- Authentication Flow -->
-	<!-- Handles user login and redirects to chat if successful -->
+	<!-- This flow handles user authentication and redirects to the chat page if successful -->
 	<flow name="DoLoginFlow">
 		<http:listener config-ref="HTTP_Listener_config" path="/login" allowedMethods="POST">
-			<!-- Response configuration for redirection -->
+		    <!-- Response configuration for redirection -->
 		    <http:response statusCode="#[vars.httpStatus default 200]"> 
 		        <http:headers><![CDATA[
 		            #[{
@@ -58,7 +58,8 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 		<logger level="INFO" message='#["User is trying to login"]' doc:name="User is trying to login"/>
 		
 		<!-- Query the database to check if the user exists with the given password -->
-		<ee:transform doc:name="ApplySHA1ToPassword" doc:id="8e1ccd11-a0ee-4ff0-b23c-fca8ccd0ef56">
+		<ee:transform doc:name="ApplySHA1ToPassword" doc:id="a732bc18-f2b1-42a5-8507-22a0a80968c8">
+			<!-- Transform the password using SHA1 encryption -->
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 import dw::Crypto
@@ -72,6 +73,7 @@ output application/json
 			</ee:message>
 		</ee:transform>
 		<db:select config-ref="Database_Config" doc:name="Check User">
+			<!-- SQL query to check the user -->
 			<db:sql>
 				<![CDATA[SELECT * FROM users WHERE username = :username AND password = :password]]>
 			</db:sql>
@@ -84,15 +86,16 @@ output application/json
 		<choice>
 			<when expression="#[sizeOf(payload) &gt; 0]">
 			    <!-- Success: Redirect to chat page -->
-			    <!-- Set Cookies -->
+            	<!-- Set Cookies for username and userId -->
             	<set-variable value="#['username=' ++ payload[0].username]" variableName="usernameCookie" doc:name="Set Username Cookie"/>
 				<set-variable value="#['userId=' ++ payload[0].id]" variableName="userIdCookie" doc:name="Set UserId Cookie"/>
-			    <set-variable value="302" doc:name="Set HTTP Status" variableName="httpStatus"/>
+			    <set-variable value="302" doc:name="Set HTTP Status" variableName="httpStatus"/> <!-- HTTP Status for redirection -->
 			    <set-variable value="http://localhost:8081/chat" doc:name="Set Redirect URL" variableName="RedirectURL"/>
 				<parse-template doc:name="Home Page" location="html/index.html" />
 			</when>
 
 			<otherwise>
+				<!-- If authentication fails, display an error message -->
 				<ee:transform doc:name="CreateLoginErrorMessage">
 					<ee:message>
 						<ee:set-payload><![CDATA[%dw 2.0
@@ -108,26 +111,28 @@ output application/java
 		</choice>
 		<error-handler>
 			<on-error-continue type="ANY" logException="true">
+				<!-- Handle any unexpected errors during the login attempt -->
 				<set-payload value="#[&quot;error&quot;: &quot;Une erreur s'est produite lors de la tentative de connexion&quot;]" />
 			</on-error-continue>
 		</error-handler>
 	</flow>
 	
 	<!-- Get Chat Page Flow -->
-	<!-- Serves the chat page -->
-	<flow name="GetChatPageFlow" doc:id="c97ea949-a66b-494e-a36d-7d1aecc2f5c0" >
-		<http:listener doc:name="Listener" doc:id="be203d6d-711c-44c5-a300-16c28c110bfc" config-ref="HTTP_Listener_config" path="/chat"/>
-		<parse-template doc:name="Home Page" doc:id="15fa125d-d2c3-46ba-a22c-699a0e4326f4" location="html/index.html"/>
+	<!-- This flow serves the chat page -->
+	<flow name="GetChatPageFlow" doc:id="2bd9279e-c914-4921-974e-cce6932c7c3d" >
+		<http:listener doc:name="Listener" doc:id="79c7dd39-e373-4e84-864f-c62aa5110b94" config-ref="HTTP_Listener_config" path="/chat"/>
+		<parse-template doc:name="Home Page" doc:id="83494025-0faa-4dee-8019-afd94e0e6667" location="html/index.html"/>
 	</flow>
 	
 	<!-- Static Resources Flow -->
-	<!-- Handles static resources like images -->
+	<!-- This flow handles the serving of static resources like images -->
 	<flow name="GetStaticResource">
 		<http:listener config-ref="HTTP_Listener_config" path="/html/images/*" />
 		<logger level="INFO" />
 		<http:load-static-resource resourceBasePath="${mule.home}/apps/${app.name}/html/images" defaultFile="logo.png" />
 		<error-handler>
 			<on-error-continue type="ANY" logException="true">
+				<!-- Handle any errors while loading the static resource -->
 				<set-payload value="#[&quot;error&quot;: &quot;Une erreur s'est produite lors du chargement de la ressource&quot;]" />
 			</on-error-continue>
 		</error-handler>
