@@ -49,7 +49,8 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 		            #[{
 		                "Location": vars.RedirectURL,
 		                "Set-Cookie": vars.usernameCookie,
-            			"Set-Cookie": vars.userIdCookie
+            			"Set-Cookie": vars.userIdCookie,
+            			"Set-Cookie": vars.sessionCookie
 		            }]
 		        ]]></http:headers>
 		    </http:response>
@@ -89,7 +90,8 @@ output application/json
             	<!-- Set Cookies for username and userId -->
             	<set-variable value="#['username=' ++ payload[0].username]" variableName="usernameCookie" doc:name="Set Username Cookie"/>
 				<set-variable value="#['userId=' ++ payload[0].id]" variableName="userIdCookie" doc:name="Set UserId Cookie"/>
-			    <set-variable value="302" doc:name="Set HTTP Status" variableName="httpStatus"/> <!-- HTTP Status for redirection -->
+				<set-variable value="#['sessionId=' ++ uuid()]" variableName="sessionCookie" doc:name="Set Secure Session Cookie"/>
+				<set-variable value="302" doc:name="Set HTTP Status" variableName="httpStatus"/> <!-- HTTP Status for redirection -->
 			    <set-variable value="http://localhost:8081/chat" doc:name="Set Redirect URL" variableName="RedirectURL"/>
 				<parse-template doc:name="Home Page" location="html/index.html" />
 			</when>
@@ -119,10 +121,20 @@ output application/java
 	
 	<!-- Get Chat Page Flow -->
 	<!-- This flow serves the chat page -->
-	<flow name="GetChatPageFlow" doc:id="2bd9279e-c914-4921-974e-cce6932c7c3d" >
-		<http:listener doc:name="Listener" doc:id="79c7dd39-e373-4e84-864f-c62aa5110b94" config-ref="HTTP_Listener_config" path="/chat"/>
-		<parse-template doc:name="Home Page" doc:id="83494025-0faa-4dee-8019-afd94e0e6667" location="html/index.html"/>
+	<flow name="GetChatPageFlow">
+	    <http:listener config-ref="HTTP_Listener_config" path="/chat"/>
+	    <logger level="INFO" doc:name="Logger" doc:id="466b6fac-2998-40d1-b76d-8d6ba8ca8a45" message="#[attributes.headers['cookie']]"/>
+		<choice>
+	        <when expression="#[attributes.headers['cookie'] contains 'sessionId']">
+	            <parse-template location="html/index.html" />
+	        </when>
+	        <otherwise>
+	            <set-variable variableName="httpStatus" value="401" />
+	            <set-payload value="Unauthorized access" />
+	        </otherwise>
+	    </choice>
 	</flow>
+
 	
 	<!-- Static Resources Flow -->
 	<!-- This flow handles the serving of static resources like images -->
