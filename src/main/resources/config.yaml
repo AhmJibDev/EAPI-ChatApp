@@ -4,3 +4,6 @@ sql:
   User: "mule"
   Password: "Databa$e1_.*pAssW,"
   Database: "demodb"
+listener:
+  Port-1:"8081"
+  Port-2:"8091"

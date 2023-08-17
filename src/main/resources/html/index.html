@@ -272,7 +272,7 @@
 
 <body>
 	<script>
-	
+		
 		document.addEventListener("DOMContentLoaded", function() {
 		    function getCookies() {
 		        const cookies = document.cookie.split("; ");
@@ -301,6 +301,19 @@
 		        console.log('Cookie userId non trouvé');
 		    }
 		});
+		
+		//connect to WebSocket
+			var ws = new WebSocket("ws://localhost:8091/ws/messages");
+			
+			
+			
+			ws.onopen = function() {
+			    console.log('Connexion établie');
+			};
+			
+			ws.onerror = function(error) {
+			    console.log('Erreur de connexion WebSocket', error);
+			};
 				
 	</script>
     <!-- Sidebar contenant le menu de navigation et les paramètres -->

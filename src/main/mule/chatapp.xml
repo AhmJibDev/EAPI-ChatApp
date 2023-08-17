@@ -8,26 +8,35 @@
       xmlns:db="http://www.mulesoft.org/schema/mule/db"
       xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
-http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ...
-http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
 http://www.mulesoft.org/schema/mule/websocket http://www.mulesoft.org/schema/mule/websocket/current/mule-websocket.xsd
-http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	
 	<!-- Configuration Section -->
 	<!-- This section includes the listener and database configurations -->
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config">
-		<http:listener-connection host="0.0.0.0" port="8081" />
+		<http:listener-connection host="0.0.0.0" port="8091" />
 	</http:listener-config>
 	
 	<db:config name="Database_Config" doc:name="Database Config">
 		<db:my-sql-connection host="${sql.Host}" port="${sql.Port}" user="${sql.User}" password="${sql.Password}" database="${sql.Database}" />
 	</db:config>
 	
+	<websocket:config name="WebSockets_Config" doc:name="WebSockets Config" doc:id="3f39a4bb-3e7b-45ad-8b3c-b41ce064ae71" >
+		<websocket:connection >
+			<reconnection >
+				<reconnect count="3"/>
+			</reconnection>
+			<websocket:server-settings listenerConfig="HTTP_Listener_config" idleSocketTimeout="10" idleSocketTimeoutUnit="HOURS" listenerBasePath="/ws"/>
+		</websocket:connection>
+	</websocket:config>
+	
 	<configuration-properties file="config.yaml" />
 
 	<!-- Login Page Flow -->
 	<!-- This flow is responsible for serving the login page -->
+
 	<flow name="GetLoginPageFlow">
 		<http:listener config-ref="HTTP_Listener_config" path="/login" allowedMethods="GET" />
 	  	<set-payload value="#[{}]" doc:name="ClearPayload"/> <!-- Clear any existing payload -->
@@ -92,7 +101,7 @@ output application/json
 				<set-variable value="#['userId=' ++ payload[0].id]" variableName="userIdCookie" doc:name="Set UserId Cookie"/>
 				<set-variable value="#['sessionId=' ++ uuid()]" variableName="sessionCookie" doc:name="Set Secure Session Cookie"/>
 				<set-variable value="302" doc:name="Set HTTP Status" variableName="httpStatus"/> <!-- HTTP Status for redirection -->
-			    <set-variable value="http://localhost:8081/chat" doc:name="Set Redirect URL" variableName="RedirectURL"/>
+			    <set-variable value="http://localhost:8091/chat" doc:name="Set Redirect URL" variableName="RedirectURL"/>
 				<parse-template doc:name="Home Page" location="html/index.html" />
 			</when>
 
@@ -135,9 +144,27 @@ output application/java
 	    </choice>
 	</flow>
 
+	<!-- User Chat Web Socket Flow -->
+	<!-- Ce flux gère la réception des messages entrants via WebSockets et les diffuse à tous les clients connectés. -->
+	<flow name="UserChatWebSocketFlow" doc:id="e7fad98e-7da2-4c9a-a075-0109d408d68b">
+		<websocket:inbound-listener doc:name="On New Inbound Message" doc:id="5214ebd1-1437-41d5-b979-85cfe5b1984d" config-ref="WebSockets_Config" path="/messages"/>
+		<ee:transform doc:name="Transform Message" doc:id="23c65270-b83f-425d-8e88-b04dbdfaf4ed">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="trace"><![CDATA[%dw 2.0
+	output application/json
+	---
+	message]]>
+				</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<websocket:broadcast doc:name="Broadcast" doc:id="030ec45d-809b-4e1a-9cc4-e2d834c3a96c" config-ref="WebSockets_Config" path="/ws/messages"/>
+	</flow>
+
 	
 	<!-- Static Resources Flow -->
 	<!-- This flow handles the serving of static resources like images -->
+
 	<flow name="GetStaticResource">
 		<http:listener config-ref="HTTP_Listener_config" path="/html/images/*" />
 		<logger level="INFO" />
