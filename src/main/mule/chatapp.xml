@@ -146,19 +146,40 @@ output application/java
 
 	<!-- User Chat Web Socket Flow -->
 	<!-- Ce flux gère la réception des messages entrants via WebSockets et les diffuse à tous les clients connectés. -->
-	<flow name="UserChatWebSocketFlow" doc:id="e7fad98e-7da2-4c9a-a075-0109d408d68b">
-		<websocket:inbound-listener doc:name="On New Inbound Message" doc:id="5214ebd1-1437-41d5-b979-85cfe5b1984d" config-ref="WebSockets_Config" path="/messages"/>
-		<ee:transform doc:name="Transform Message" doc:id="23c65270-b83f-425d-8e88-b04dbdfaf4ed">
-			<ee:message />
-			<ee:variables>
-				<ee:set-variable variableName="trace"><![CDATA[%dw 2.0
-	output application/json
-	---
-	message]]>
-				</ee:set-variable>
-			</ee:variables>
-		</ee:transform>
-		<websocket:broadcast doc:name="Broadcast" doc:id="030ec45d-809b-4e1a-9cc4-e2d834c3a96c" config-ref="WebSockets_Config" path="/ws/messages"/>
+		<!-- Définition de la variable globale pour le suivi des clients connectés -->
+	
+	<!-- User Chat Web Socket Flow -->
+	<flow name="UserChatWebSocketFlow" doc:id="a7915874-e8b6-4822-b71c-741c6be80dee">
+		<websocket:inbound-listener doc:name="On New Inbound Message" doc:id="5ad99545-b9cc-4596-ac71-e2d4fb1cb776" config-ref="WebSockets_Config" path="/messages" outputMimeType="application/json">
+			<reconnect />
+			<websocket:default-groups >
+				<websocket:default-group value="Antenne" />
+			</websocket:default-groups>
+		</websocket:inbound-listener>
+	   <!-- Récupérer l'ID du socket et l'ID utilisateur -->
+	    <set-variable variableName="socketId" value="#[attributes.socketId]" doc:name="Store socket ID"/>
+	    <set-variable variableName="userId" value="#[attributes.queryParams.userId]" doc:name="Store userId"/>
+	
+	    <ee:transform doc:name="Chat Message">
+	        <ee:message>
+	            <ee:set-payload><![CDATA[%dw 2.0
+	    output application/json
+	    ---
+	    {
+	        message: payload.message,
+	        socketId: vars.socketId, // inclure l'ID du socket
+	        userId: vars.userId // inclure l'ID utilisateur
+	    }]]>
+	            </ee:set-payload>
+	        </ee:message>
+	    </ee:transform>
+
+		<websocket:broadcast doc:name="Broadcast" doc:id="e4c4e034-d2d1-4574-9441-1529116508b9" config-ref="WebSockets_Config" path="/ws/messages" >
+			<websocket:groups >
+				<websocket:group value="Antenne" />
+			</websocket:groups>
+		</websocket:broadcast>
+		<logger message="Message diffusé: #[payload.message]" />
 	</flow>
 
 	

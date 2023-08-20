@@ -271,51 +271,6 @@
 </head>
 
 <body>
-	<script>
-		
-		document.addEventListener("DOMContentLoaded", function() {
-		    function getCookies() {
-		        const cookies = document.cookie.split("; ");
-		        const result = {};
-		        cookies.forEach(cookie => {
-		            const [name, value] = cookie.split("=");
-		            result[name] = value;
-		        });
-		        return result;
-		    }
-		
-		    const cookies = getCookies();
-		    const username = cookies.username;
-		    const userId = cookies.userId;
-		
-		    if (username) {
-		        console.log(`Le nom d'utilisateur est ${username}`);
-		        document.getElementById("name").textContent = "Hello " + username + "!";
-		    } else {
-		        console.log('Cookie username non trouvé');
-		    }
-		
-		    if (userId) {
-		        console.log(`L'ID utilisateur est ${userId}`);
-		    } else {
-		        console.log('Cookie userId non trouvé');
-		    }
-		});
-		
-		//connect to WebSocket
-			var ws = new WebSocket("ws://localhost:8091/ws/messages");
-			
-			
-			
-			ws.onopen = function() {
-			    console.log('Connexion établie');
-			};
-			
-			ws.onerror = function(error) {
-			    console.log('Erreur de connexion WebSocket', error);
-			};
-				
-	</script>
     <!-- Sidebar contenant le menu de navigation et les paramètres -->
     <aside id="sidebar">
         <nav>
@@ -400,6 +355,100 @@
         </form>
     </main>
     <script>
+    document.addEventListener("DOMContentLoaded", function() {
+    function getCookies() {
+        const cookies = document.cookie.split("; ");
+        const result = {};
+        cookies.forEach(cookie => {
+            const [name, value] = cookie.split("=");
+            result[name] = value;
+        });
+        return result;
+    }
+
+    const cookies = getCookies();
+    const username = cookies.username;
+    const userId = cookies.userId;
+
+    if (username) {
+        console.log(`Le nom d'utilisateur est ${username}`);
+        document.getElementById("name").textContent = "Hello " + username + "!";
+    } else {
+        console.log('Cookie username non trouvé');
+    }
+
+    if (userId) {
+        console.log(`L'ID utilisateur est ${userId}`);
+    } else {
+        console.log('Cookie userId non trouvé');
+    }
+
+    // Connect to WebSocket
+    var ws = new WebSocket(`ws://localhost:8091/ws/messages?userId=${userId}`);
+
+    ws.onopen = function() {
+        console.log('Connexion établie');
+    };
+
+    ws.onerror = function(error) {
+        console.log('Erreur de connexion WebSocket', error);
+    };
+
+    
+    // Variable pour stocker l'ID du socket de cette connexion
+	var mySocketId;
+	
+    // Gestionnaire pour les messages reçus
+	ws.onmessage = function(event) {
+	    var receivedMessage = JSON.parse(event.data);
+	    
+	    consol.log("userID message reçu :"+receivedMessage.userId);
+	    consol.log("userID moi :"+userId);
+	
+	    // Si l'ID utilisateur dans le message correspond à userId, ignorez ce message car il provient de ce client
+	    if (receivedMessage.userId === userId) {
+	        return;
+	    }
+	
+	    addMessageToChat('recipient', receivedMessage.message);
+	};
+	
+	// Fonction pour envoyer un message
+	function sendMessage() {
+	    var userText = document.getElementById('userText').value;
+	    var request = {
+	        message: userText
+	        // Pas besoin d'envoyer l'ID du socket; le serveur le gère
+	    };
+	    ws.send(JSON.stringify(request));
+	    console.log(`Message envoyé au serveur: ${userText}`);
+	    addMessageToChat('sender', userText);
+	    document.getElementById('userText').value = '';
+	}
+
+
+    // Fonction pour ajouter un message au chat
+    function addMessageToChat(role, messageText) {
+        var chatter = document.getElementById('chatter');
+        var messageElement = document.createElement('p');
+        messageElement.className = role;
+        messageElement.textContent = messageText;
+        chatter.appendChild(messageElement);
+    }
+
+ 
+    // Gestionnaire d'événement pour le formulaire de message
+    var formElement = document.getElementById('form-message');
+    if (formElement) {
+        formElement.addEventListener('submit', function(e) {
+            e.preventDefault(); // Empêche la soumission du formulaire
+            sendMessage();     // Envoyer le message
+        });
+    } else {
+        console.error('Element with ID "form-message" not found');
+    }
+});
+    
     	document.addEventListener('DOMContentLoaded', function() {
 		    var welcomeInfo = document.getElementById('welcome-info');
 		    var h2 = welcomeInfo.getElementsByTagName('h2')[0];
