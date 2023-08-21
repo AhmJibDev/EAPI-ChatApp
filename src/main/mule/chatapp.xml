@@ -128,6 +128,25 @@ output application/java
 		</error-handler>
 	</flow>
 	
+	<!-- User Chat Web Socket Flow -->
+	<!-- Ce flux gère la réception des messages entrants via WebSockets et les diffuse à tous les clients connectés. -->
+	<flow name="new-chat-messages-flow" doc:id="2598003b-714a-49ec-9667-3c5154938a8d">
+		<websocket:inbound-listener doc:name="On New Inbound Message" doc:id="eafddd2a-dedb-4469-9d4b-a21e2fd235c8" config-ref="WebSockets_Config" path="/messages" outputMimeType="application/json" />
+		<set-variable variableName="username" value="#[attributes.queryParams.username]" doc:name="Store userId"/>
+		<ee:transform doc:name="Chat Message" doc:id="1047bdbb-717d-4076-afa4-9a232d54ed17">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: payload.message,
+	name: vars.username // inclure username
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<websocket:broadcast doc:name="Broadcast" doc:id="1b2e13dc-2104-47e1-b326-f703d7c96dea" config-ref="WebSockets_Config" path="/ws/messages" />
+	</flow>
+	
 	<!-- Get Chat Page Flow -->
 	<!-- This flow serves the chat page -->
 	<flow name="GetChatPageFlow">
@@ -142,44 +161,6 @@ output application/java
 	            <set-payload value="Unauthorized access" />
 	        </otherwise>
 	    </choice>
-	</flow>
-
-	<!-- User Chat Web Socket Flow -->
-	<!-- Ce flux gère la réception des messages entrants via WebSockets et les diffuse à tous les clients connectés. -->
-		<!-- Définition de la variable globale pour le suivi des clients connectés -->
-	
-	<!-- User Chat Web Socket Flow -->
-	<flow name="UserChatWebSocketFlow" doc:id="a7915874-e8b6-4822-b71c-741c6be80dee">
-		<websocket:inbound-listener doc:name="On New Inbound Message" doc:id="5ad99545-b9cc-4596-ac71-e2d4fb1cb776" config-ref="WebSockets_Config" path="/messages" outputMimeType="application/json">
-			<reconnect />
-			<websocket:default-groups >
-				<websocket:default-group value="Antenne" />
-			</websocket:default-groups>
-		</websocket:inbound-listener>
-	   <!-- Récupérer l'ID du socket et l'ID utilisateur -->
-	    <set-variable variableName="socketId" value="#[attributes.socketId]" doc:name="Store socket ID"/>
-	    <set-variable variableName="userId" value="#[attributes.queryParams.userId]" doc:name="Store userId"/>
-	
-	    <ee:transform doc:name="Chat Message">
-	        <ee:message>
-	            <ee:set-payload><![CDATA[%dw 2.0
-	    output application/json
-	    ---
-	    {
-	        message: payload.message,
-	        socketId: vars.socketId, // inclure l'ID du socket
-	        userId: vars.userId // inclure l'ID utilisateur
-	    }]]>
-	            </ee:set-payload>
-	        </ee:message>
-	    </ee:transform>
-
-		<websocket:broadcast doc:name="Broadcast" doc:id="e4c4e034-d2d1-4574-9441-1529116508b9" config-ref="WebSockets_Config" path="/ws/messages" >
-			<websocket:groups >
-				<websocket:group value="Antenne" />
-			</websocket:groups>
-		</websocket:broadcast>
-		<logger message="Message diffusé: #[payload.message]" />
 	</flow>
 
 	
