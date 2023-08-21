@@ -14,7 +14,6 @@ http://www.mulesoft.org/schema/mule/websocket http://www.mulesoft.org/schema/mul
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	
 	<!-- Configuration Section -->
-	<!-- This section includes the listener and database configurations -->
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config">
 		<http:listener-connection host="0.0.0.0" port="8091" />
 	</http:listener-config>
@@ -130,9 +129,9 @@ output application/java
 	
 	<!-- User Chat Web Socket Flow -->
 	<!-- Ce flux gère la réception des messages entrants via WebSockets et les diffuse à tous les clients connectés. -->
-	<flow name="new-chat-messages-flow" doc:id="2598003b-714a-49ec-9667-3c5154938a8d">
+	<flow name="BroadcastWebSocketFlow" doc:id="2598003b-714a-49ec-9667-3c5154938a8d">
 		<websocket:inbound-listener doc:name="On New Inbound Message" doc:id="eafddd2a-dedb-4469-9d4b-a21e2fd235c8" config-ref="WebSockets_Config" path="/messages" outputMimeType="application/json" />
-		<set-variable variableName="username" value="#[attributes.queryParams.username]" doc:name="Store userId"/>
+		<set-variable variableName="username" value="#[attributes.queryParams.username]" doc:name="Store username"/>
 		<ee:transform doc:name="Chat Message" doc:id="1047bdbb-717d-4076-afa4-9a232d54ed17">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
@@ -148,7 +147,6 @@ output application/json
 	</flow>
 	
 	<!-- Get Chat Page Flow -->
-	<!-- This flow serves the chat page -->
 	<flow name="GetChatPageFlow">
 	    <http:listener config-ref="HTTP_Listener_config" path="/chat"/>
 	    <logger level="INFO" doc:name="Logger" doc:id="466b6fac-2998-40d1-b76d-8d6ba8ca8a45" message="#[attributes.headers['cookie']]"/>
@@ -166,7 +164,6 @@ output application/json
 	
 	<!-- Static Resources Flow -->
 	<!-- This flow handles the serving of static resources like images -->
-
 	<flow name="GetStaticResource">
 		<http:listener config-ref="HTTP_Listener_config" path="/html/images/*" />
 		<logger level="INFO" />

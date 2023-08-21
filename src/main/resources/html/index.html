@@ -259,6 +259,7 @@
             height: 60px;
             width: 60px;
             border: none;
+            cursor: pointer;
         }
 
         input:focus {
@@ -266,6 +267,17 @@
             border-bottom: 1px solid #7C7C7C !important; 
         }
         
+        #user {
+            font-size: 12px;
+            font-weight: bold;
+            color: #3274CC;
+        }
+        
+        #user1 {
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
         
     </style>
 </head>
@@ -304,10 +316,10 @@
             <h2>Contact</h2>
             <ul id="list-contact">
                 <!-- Liste des contacts -->
-                <li><img src="./html/images/mulesoft_logo_icon.png" alt="Logo de MuleSoft">Pauline <span class="date">Today, 9.52pm</span></li>
-                <li><img src="./html/images/mulesoft_logo_icon.png" alt="Logo de MuleSoft">Victor <span class="date">Today, 9.52pm</span></li>
-                <li><img src="./html/images/mulesoft_logo_icon.png" alt="Logo de MuleSoft">Lila <span class="date">Today, 9.52pm</span></li>
-                <li><img src="./html/images/mulesoft_logo_icon.png" alt="Logo de MuleSoft">Nicolas <span class="date">Today, 9.52pm</span></li>
+                <li><img src="./html/images/icon-1.png" alt="Logo de MuleSoft">Ahmed<span class="date">Online 🟢</span></li>
+                <li><img src="./html/images/icon-2.png" alt="Logo de MuleSoft">Pauline<span class="date">Online 🟢</span></li>
+                <li><img src="./html/images/icon-3.png" alt="Logo de MuleSoft">Selma<span class="date">Offline 🔴</span></li>
+                <li><img src="./html/images/icon-4.png" alt="Logo de MuleSoft">Nicolas<span class="date">Online 🟢</span></li>
             </ul>
         </div>
     </header>
@@ -317,8 +329,8 @@
         <section id="person">
             <!-- Détails de la personne avec laquelle l'utilisateur chatte -->
             <div id="person-details">
-                <img src="./html/images/mulesoft_logo_icon.png" alt="Logo de MuleSoft"> 
-                <h2>Pauline</h2>
+                <img src="./html/images/etl.png" alt="Logo de Eutelsat"> 
+                <h2>Eutelsat-French-Team</h2>
             </div>
 
             <!-- Icônes pour la téléphonie et le menu supplémentaire -->
@@ -330,10 +342,7 @@
 
         <!-- Chat entre l'utilisateur et la personne sélectionnée -->
         <section id="chatter">
-            <p class="recipient">Hey There!</p>
-            <p class="sender">Hello</p>
-            <p class="sender">I am fine and how are you?</p>
-            <p class="recipient">I am doing well, Can we meet tomorrow?</p>
+            
         </section>
 
         <!-- Formulaire pour envoyer un message -->
@@ -398,31 +407,54 @@
 
         //wait for messages back
         ws.onmessage = function(event) {
-            var receivedMessage = JSON.parse(event.data);
-            
-            // Créer un nouvel élément de paragraphe avec la classe "recipient"
-            var messageElement = $('<p></p>').addClass('recipient').text(receivedMessage.message);
-            if (receivedMessage.name === username) {
+		    var receivedMessage = JSON.parse(event.data);
+		
+		    // Si le message provient de l'utilisateur actuel, l'ignorer
+		    if (receivedMessage.name === username) {
 		        return;
 		    }
-            // Ajouter le nouvel élément à #chatter
-            $('#chatter').append(messageElement);
-        };
+		
+		    // Créer un nouvel élément de paragraphe avec la classe "recipient"
+		    var messageElement = $('<p></p>').addClass('recipient');
+		
+		    // Créer un élément span pour le nom d'utilisateur et l'ajouter au paragraphe
+		    var userSpan = $('<span></span>').attr('id', 'user').html(receivedMessage.name + '<br>');
+		    messageElement.append(userSpan);
+		
+		    // Ajouter le texte du message au paragraphe
+		    messageElement.append(receivedMessage.message);
+		
+		    // Ajouter le nouvel élément à #chatter
+		    $('#chatter').append(messageElement);
+		};
+
 
         // send message
         function sendMessage() {
             var name = username;
-            var msg = document.getElementById("userText").value;
+            var msgInput = document.getElementById("userText");
+            var msg = msgInput.value;
             var request = {
                 name: name,
                 message: msg
             };
             ws.send(JSON.stringify(request));
-
+        
             // Créer un nouvel élément de paragraphe avec la classe "sender"
-            var messageElement = $('<p></p>').addClass('sender').text(msg);
+            var messageElement = $('<p></p>').addClass('sender');
+        
+            // Créer un élément span pour le nom d'utilisateur et l'ajouter au paragraphe
+            var userSpan = $('<span></span>').attr('id', 'user1').html(name + '<br>');
+            messageElement.append(userSpan);
+        
+            // Ajouter le texte du message au paragraphe
+            messageElement.append(msg);
+        
             // Ajouter le nouvel élément à #chatter
             $('#chatter').append(messageElement);
+        
+            // Réinitialiser la valeur du champ de saisie
+            msgInput.value = '';
         }
 
         // send message on form submit
